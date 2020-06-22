@@ -1,7 +1,7 @@
 import os
 import requests
 import time
-from flask import Flask, session,render_template,request,redirect,url_for,flash,make_response
+from flask import Flask, session,render_template,request,redirect,url_for,flash,make_response,jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -151,3 +151,37 @@ def logout():
     res=make_response(render_template("logout.html"))
     res.set_cookie('username','',expires=0)
     return res 
+
+
+@app.route("/api/<isbn>",methods=['GET'])
+def api(isbn):
+    books=db.execute("SELECT * FROM books WHERE isbn= :i",{"i":isbn}).fetchone()
+    if books :
+        API="qQB2Uiw9My1Hrlov379BQ"
+        res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": API, "isbns": isbn})
+        if res :
+            print(res.json())
+            goodinfo = res.json()
+            scratch = goodinfo["books"]
+            reviews_count = scratch[0]["work_ratings_count"]
+            average_rating = scratch[0]["average_rating"]
+            bjson = [
+                {
+                    "title": books['title'],
+                    "author": books['author'],
+                    "year": books['year'],
+                    "isbn": books['isbn'],
+                    "review_count": reviews_count,
+                    "average_score": average_rating
+                }
+             ]
+            return jsonify(bjson)
+        else :
+            return "ERROR",404
+    else :
+        return "ERROR",404
+        
+
+
+        
+       

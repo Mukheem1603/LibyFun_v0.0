@@ -15,15 +15,7 @@
             <h1>Hello, Welcome to LibyFun!!!</h1>    
           <h6>LibyFun is a website for all the book lovers out there.</h6>
         </div>
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          
-          {% for message in messages %}
-            <p>{{ message }}<p>
-          {% endfor %}
-          
-        {% endif %}
-      {% endwith %}
+    
 
       {% if error %}
          <p>{{error}}</p>

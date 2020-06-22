@@ -27,7 +27,9 @@ db = scoped_session(sessionmaker(bind=engine))
 @app.route("/")
 def index():
     if request.cookies.get('username'):
-        return render_template("home.html",user=request.cookies.get('username'))
+        return redirect(url_for('login'))
+    if request.cookies.get('error'):
+        return render_template("register.html",error=request.cookies.get('error'))
     return render_template("register.html")
 
 @app.route("/register",methods=["POST","GET"])
@@ -41,25 +43,26 @@ def register():
         password = request.form.get("password")
         if db.execute("SELECT * from users WHERE username= :u AND password= :p",{"u":username,"p":password}).rowcount == 1 :
             print("User already exists,Log In")
-            flash("User already exists,Log In")
             r1 = make_response(redirect(url_for('loginpage')))
             r1.set_cookie('error','User already exists,Log In',max_age=10) 
             return r1
         elif db.execute("SELECT * from users WHERE username= :u",{"u":username}).rowcount == 1:
             print("Username already exists, try using another one 🤔")
-            flash("Username already exists, try using another one 🤔")
-            return render_template("register.html")
+            r5 =make_response(redirect(url_for('index')))
+            r5.set_cookie('error','Username already exists, try using another one 🤔',max_age=10)
+            return r5 
         else :
             db.execute("INSERT INTO users (username,password) VALUES (:username, :password)",{"username":username,"password":password})
+            db.commit()
             print("Registration Successful!!!,now login to the world of books")
             r2 = make_response(redirect(url_for('loginpage')))
-            r2.set_cookie('error','Registration Successful!!!,now login to the world of books',max_age=20) 
+            r2.set_cookie('error','Registration Successful!!!,now login to the world of books',max_age=10) 
             return r2
 
 @app.route("/login",methods=["POST","GET"])
 def loginpage():
     if request.cookies.get('username'):
-        return render_template("home.html",user=request.cookies.get('username'))
+        return redirect(url_for('login'))
     if request.method == "GET" and request.cookies.get('error'):
         err = request.cookies.get('error')
         return render_template("login.html",error=err)
